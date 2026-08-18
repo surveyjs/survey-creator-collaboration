@@ -23,7 +23,7 @@ const MIN_NODE = [20, 11]; // Angular 18 needs ^18.19 || ^20.11 || >=22; we requ
 const FORCE = !!process.env.COLLAB_FORCE_REBUILD;
 
 const SIBLINGS = [
-    { dir: "survey-library", url: "https://github.com/surveyjs/survey-library", branch: "V3" },
+    { dir: "survey-library", url: "https://github.com/surveyjs/survey-library", branch: "master" },
     { dir: "survey-creator", url: "https://github.com/surveyjs/survey-creator", branch: "feature/journal-plugin" }
 ];
 
