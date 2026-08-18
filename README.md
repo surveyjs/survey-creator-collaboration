@@ -1,7 +1,7 @@
 # survey-creator-collaboration-v2
 
 Collaborative (multi-user) editing for SurveyJS Creator, built on the **journal plugin**
-(`JournalPlugin` from `survey-creator-core`): every local edit becomes a small JSON
+(`CollaborationPlugin` from `survey-creator-core`): every local edit becomes a small JSON
 *record*; peers apply the record stream and converge (last write wins, no CRDT/OT).
 
 Four client apps share one framework-agnostic collab module and one relay server:
@@ -17,12 +17,12 @@ Four client apps share one framework-agnostic collab module and one relay server
 ## Architecture
 
 ```
-Creator edit ─► JournalPlugin.onRecordAdded/Changed ─► {type:"append", payload} ─► server
+Creator edit ─► CollaborationPlugin.onRecordAdded/Changed ─► {type:"append", payload} ─► server
 server: room.log.push(payload) ─► broadcast {type:"record", from, payload} to other clients
 receiver: plugin.apply(payload)          (echo-suppressed, idempotent)
 late joiner: {type:"init", seed, log} ─► creator.JSON = seed; plugin.apply(log)
 
-focus change ─► PresencePlugin.onStateChanged ─► {type:"presence", state} ─► server
+focus change ─► CollaborationPlugin.onStateChanged ─► {type:"presence", state} ─► server
 server: wrap {clientId, name, color, state} ─► broadcast {type:"presence", peer} to others
 receiver: presence.upsertPeer(peer)      (the plugin renders the overlay itself)
 ```
@@ -61,7 +61,7 @@ every step is skipped when its output is already there, so a second `npm install
 | `COLLAB_FORCE_REBUILD=1` | ignore all skips and rebuild every survey package |
 
 What bootstrap does, and why it is needed at all: this app cannot take the survey packages from
-npm — the published `survey-creator-core` has no `JournalPlugin`/`PresencePlugin`, and the `file:`
+npm — the published `survey-creator-core` has no `CollaborationPlugin`, and the `file:`
 deps of `lobby/` + `clients/*` point at sibling **`build/` output** dirs, which are gitignored in
 both sibling repos. So it:
 

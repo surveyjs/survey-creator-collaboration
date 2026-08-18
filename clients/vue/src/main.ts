@@ -1,12 +1,16 @@
 /// <reference types="vite/client" />
 import { createApp, h } from "vue";
 import { slk } from "survey-core";
-import { CollabBarPlugin, JournalPlugin, PresencePlugin, SurveyCreatorModel, registerCreatorTheme } from "survey-creator-core";
+import { SurveyCreatorModel, registerCreatorTheme } from "survey-creator-core";
+// Collaboration ships as its own bundle - the default creator carries
+// neither its JS nor its CSS.
+import { CollaborationPlugin } from "survey-creator-core/collaboration";
 import SurveyThemes from "survey-core/themes";
 import { SurveyCreatorComponent } from "survey-creator-vue";
 import { connectCollab, getDisplayName, getRoomIdFromUrl } from "../../../shared/collab-client";
 import "survey-core/survey-core.css";
 import "survey-creator-core/survey-creator-core.css";
+import "survey-creator-core/collaboration.css";
 // Localization dictionaries: importing registers all bundled locales (ru, de,
 // fr, ...) — without them the Translation tab has no languages to add.
 import "survey-core/i18n";
@@ -31,29 +35,22 @@ if (!roomId) {
         showJSONEditorTab: true
     });
 
-    const plugin = new JournalPlugin(creator);
-    creator.addPlugin("journal", plugin);
-    // Captures focus/selection/cursor and renders remote peers; the transport
-    // below only ships its opaque state (the server stamps name/color on it).
-    const presence = new PresencePlugin(creator);
-    creator.addPlugin("presence", presence);
-
-    // The collaboration bar renders itself inside the creator root (above the
-    // tabs); participants flow in via the PresencePlugin. Host-specific bits —
-    // the lobby invite link and navigation — are plugin options.
-    const bar = new CollabBarPlugin(creator, {
+    // One plugin: the change journal, presence capture/rendering and the
+    // collaboration strip above the tabs. Host-specific bits - the lobby
+    // invite link and navigation - are options.
+    const collab = new CollaborationPlugin(creator, {
         roomId,
         framework: "Vue 3",
         getInviteLink: () => `${location.origin}/?room=${encodeURIComponent(roomId)}`,
         onBack: () => { location.href = "/"; }
     });
-    creator.addPlugin("collabBar", bar);
+    creator.addPlugin("collaboration", collab);
 
     connectCollab({
-        creator, plugin, presence, roomId,
+        creator, collab, roomId,
         name: getDisplayName(),
-        onStatus: (s) => bar.setStatus(s),
-        onHistoryChanged: (changes) => bar.setHistory(changes)
+        onStatus: (s) => collab.setStatus(s),
+        onHistoryChanged: (changes) => collab.setHistory(changes)
     });
 
     createApp({ render: () => h(SurveyCreatorComponent, { model: creator }) }).mount("#root");

@@ -74,7 +74,7 @@ test.describe("translation delete guard", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1680, height: 1000 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         await alice.locator("#tab-translation").click();
         await bob.locator("#tab-translation").click();
@@ -130,7 +130,7 @@ test.describe("translation delete guard", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1680, height: 1000 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         await alice.locator("#tab-translation").click();
         await bob.locator("#tab-translation").click();

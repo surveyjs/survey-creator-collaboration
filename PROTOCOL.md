@@ -158,7 +158,7 @@ Principles:
   the **latest** state per connected client and forgets it on disconnect.
 - Presence state is **opaque to the server** (like records). The state schema is a
   creator-side convention: it is produced and consumed by survey-creator-core's
-  `PresencePlugin` (`IPresenceState`) — pure focus data (tab, selection, keyboard
+  `CollaborationPlugin` (`IPresenceState`) — pure focus data (tab, selection, keyboard
   focus, cursor), with no user identity inside.
 - **User identity lives in the envelope, not the state**: the server stamps
   `clientId`, `name` (from the connection URL) and `color` (server-assigned) onto

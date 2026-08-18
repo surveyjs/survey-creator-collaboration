@@ -20,7 +20,8 @@
                         "preserveSymlinks": true,
                         "styles": [
                             "node_modules/survey-core/survey-core.css",
-                            "node_modules/survey-creator-core/survey-creator-core.css"
+                            "node_modules/survey-creator-core/survey-creator-core.css",
+                            "node_modules/survey-creator-core/collaboration.css"
                         ],
                         "budgets": [
                             { "type": "initial", "maximumWarning": "10mb", "maximumError": "20mb" }

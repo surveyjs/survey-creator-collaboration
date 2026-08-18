@@ -227,9 +227,9 @@ test.describe("presence UI", () => {
         await openRoomAs(bob, roomId, "Bob");
 
         // Both see each other in the status bar (peers exclude self).
-        await expect(alice.locator(".collab-participant-chip")).toHaveCount(1);
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
-        await expect(bob.locator('.collab-participant-chip[title*="Alice"]')).toBeVisible();
+        await expect(alice.locator(".svc-collab-bar__participant")).toHaveCount(1);
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
+        await expect(bob.locator('.svc-collab-bar__participant[title*="Alice"]')).toBeVisible();
 
         // Bob selects q1 → Alice sees the native-style ring on HER q1 content
         // node, drawn in Bob's color.
@@ -272,7 +272,7 @@ test.describe("presence UI", () => {
         // shared state only describes what Bob does NOW, so his selection is
         // cleared together with the tab (no "away" ghosts).
         await bob.locator("#tab-test, #tab-preview").first().click();
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toHaveAttribute("title", /Bob — (test|preview)/);
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toHaveAttribute("title", /Bob on (Preview|test)/);
         await expect(alice.locator("[data-collab-focus]")).toHaveCount(0);
         await expect(aliceBadge).toBeHidden();
 
@@ -283,7 +283,7 @@ test.describe("presence UI", () => {
 
         // Bob leaves → all of Bob's artifacts disappear on Alice's side.
         await bob.close();
-        await expect(alice.locator(".collab-participant-chip")).toHaveCount(0);
+        await expect(alice.locator(".svc-collab-bar__participant")).toHaveCount(0);
         await expect(alice.locator("[data-collab-focus]")).toHaveCount(0);
         await expect(alice.locator(".collab-presence-badge")).toHaveCount(0);
         await expect(alice.locator(".collab-presence-cursor")).toBeHidden();
@@ -300,7 +300,7 @@ test.describe("presence UI", () => {
         const bob = await context.newPage();
         await openRoomAs(bob, roomId, "Bob");
 
-        const chip = alice.locator('.collab-participant-chip[title*="Bob"]');
+        const chip = alice.locator('.svc-collab-bar__participant[title*="Bob"]');
         await expect(chip).toBeVisible();
         // Tag the current chip node; a full rebuild (replaceChildren) would drop it.
         await chip.evaluate((el) => el.setAttribute("data-persist-check", "1"));
@@ -315,13 +315,13 @@ test.describe("presence UI", () => {
         await expect(alice.locator(".collab-presence-cursor-name", { hasText: "Bob" })).toBeVisible();
 
         // The chip node survived: no rebuild happened for a roster that didn't change.
-        await expect(alice.locator('.collab-participant-chip[data-persist-check="1"]')).toHaveCount(1);
+        await expect(alice.locator('.svc-collab-bar__participant[data-persist-check="1"]')).toHaveCount(1);
 
         // A real roster change (Bob switches tab) DOES refresh the chip: its
         // title reflects the new tab and the stale tagged node is gone.
         await bob.locator("#tab-test, #tab-preview").first().click();
-        await expect(alice.locator(".collab-participant-chip").first()).toHaveAttribute("title", /Bob — (test|preview)/);
-        await expect(alice.locator('.collab-participant-chip[data-persist-check="1"]')).toHaveCount(0);
+        await expect(alice.locator(".svc-collab-bar__participant").first()).toHaveAttribute("title", /Bob on (Preview|test)/);
+        await expect(alice.locator('.svc-collab-bar__participant[data-persist-check="1"]')).toHaveCount(0);
 
         await bob.close();
     });
@@ -339,16 +339,16 @@ test.describe("presence UI", () => {
 
         // Bob goes to Logic → clicking his chip switches Alice from Designer to Logic.
         await bob.locator("#tab-logic").click();
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toHaveAttribute("title", /Bob — logic/);
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toHaveAttribute("title", /Bob on Logic/);
         await expect(alice.locator(".svc-toolbox").first()).toBeVisible();
-        await alice.locator('.collab-participant-chip[title*="Bob"]').click();
+        await alice.locator('.svc-collab-bar__participant[title*="Bob"]').click();
         await expect(alice.locator(".svc-logic-tab").first()).toBeVisible();
 
         // Bob back to Designer → clicking his row in the overflow list follows him.
         await bob.locator("#tab-designer").click();
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toHaveAttribute("title", /Bob — designer/);
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toHaveAttribute("title", /Bob on Designer/);
         await alice.getByRole("button", { name: "Participants" }).click();
-        await alice.locator(".collab-participant-row", { hasText: "Bob" }).click();
+        await alice.locator(".svc-collab-bar__roster-item", { hasText: "Bob" }).click();
         await expect(alice.locator(".svc-toolbox").first()).toBeVisible();
 
         await bob.close();
@@ -379,7 +379,7 @@ test.describe("presence UI", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1450, height: 1100 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         const rect = (p: Page, selector: string) =>
             p.locator(selector).first().evaluate((el) => {
@@ -511,7 +511,7 @@ test.describe("presence UI", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1900, height: 1100 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         const canvasRect = (p: Page) =>
             p.evaluate(() => {
@@ -638,7 +638,7 @@ test.describe("presence UI", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1071, height: 618 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         // Alice opens her flyout panel; Bob's stays closed.
         await alice.locator('.svc-sidebar-tabs button[title="General"]').click();
@@ -697,7 +697,7 @@ test.describe("presence UI", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1600, height: 900 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         // The ring renders only when the LOCAL client is on the Translations
         // tab too (same gate as the designer decorations) - both go there.
@@ -773,7 +773,7 @@ test.describe("presence UI", () => {
         const bob = await context.newPage();
         await bob.setViewportSize({ width: 1600, height: 900 });
         await openRoomAs(bob, roomId, "Bob");
-        await expect(alice.locator('.collab-participant-chip[title*="Bob"]')).toBeVisible();
+        await expect(alice.locator('.svc-collab-bar__participant[title*="Bob"]')).toBeVisible();
 
         await alice.locator("#tab-translation").click();
         await bob.locator("#tab-translation").click();

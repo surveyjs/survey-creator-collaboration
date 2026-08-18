@@ -10,14 +10,15 @@ import { addFirstQuestion, createRoom, openRoom, questionLocator, uniqueRoomId }
  * live-sync.spec.ts. (The "Save to Version History" action is currently
  * removed from the bar, so named versions are not produced through this UI.)
  */
-const panel = (page: Page): ReturnType<Page["locator"]> => page.locator(".collab-version-panel");
+const panel = (page: Page): ReturnType<Page["locator"]> => page.locator(".svc-floating-panel");
 
 async function openCollabMenu(page: Page): Promise<void> {
     await page.getByRole("button", { name: "Collaboration" }).click();
 }
 async function openHistory(page: Page): Promise<void> {
     await openCollabMenu(page);
-    await page.getByRole("button", { name: "Show Version History" }).click();
+    // The menu is a survey-core popup list, so its entries are menuitems.
+    await page.getByRole("menuitem", { name: "Show Version History" }).click();
     await expect(panel(page)).toBeVisible();
 }
 
@@ -29,9 +30,9 @@ test.describe("version history — react", () => {
 
         // Empty room → Current Version + Document created, no edits between them.
         await openHistory(page);
-        await expect(page.locator(".collab-version-current")).toBeVisible();
-        await expect(page.locator(".collab-version-base")).toBeVisible();
-        await expect(page.locator(".collab-version-group")).toHaveCount(0);
+        await expect(page.locator(".svc-version-history__row--current")).toBeVisible();
+        await expect(page.locator(".svc-version-history__row--base")).toBeVisible();
+        await expect(page.locator(".svc-version-history__row--group")).toHaveCount(0);
         await page.keyboard.press("Escape");
         await expect(panel(page)).toBeHidden();
 
@@ -40,8 +41,8 @@ test.describe("version history — react", () => {
         await expect(questionLocator(page, "question1")).toBeVisible();
 
         await openHistory(page);
-        await expect(page.locator(".collab-version-group")).toContainText("autosaved version");
-        await expect(page.locator(".collab-version-autosaved").first()).toBeVisible();
+        await expect(page.locator(".svc-version-history__row--group")).toContainText("autosaved version");
+        await expect(page.locator(".svc-version-history__row--change").first()).toBeVisible();
         await page.keyboard.press("Escape");
         await expect(panel(page)).toBeHidden();
     });
@@ -53,7 +54,7 @@ test.describe("version history — react", () => {
         await openHistory(page);
 
         const before = (await panel(page).boundingBox())!;
-        const handle = (await page.locator(".collab-version-header").boundingBox())!;
+        const handle = (await page.locator(".svc-floating-panel__header").boundingBox())!;
         // Grab the middle of the header (away from the minimize/close buttons)
         // and drag left and down.
         await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);

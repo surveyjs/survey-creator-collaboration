@@ -4,7 +4,10 @@ import { AfterViewInit, Component, OnDestroy } from "@angular/core";
 import "survey-core/i18n";
 import "survey-creator-core/i18n";
 import { slk } from "survey-core";
-import { CollabBarPlugin, JournalPlugin, PresencePlugin, SurveyCreatorModel, registerCreatorTheme } from "survey-creator-core";
+import { SurveyCreatorModel, registerCreatorTheme } from "survey-creator-core";
+// Collaboration ships as its own bundle - the default creator carries
+// neither its JS nor its CSS.
+import { CollaborationPlugin } from "survey-creator-core/collaboration";
 import SurveyThemes from "survey-core/themes";
 import { SurveyCreatorModule } from "survey-creator-angular";
 import { connectCollab, getDisplayName, getRoomIdFromUrl } from "../../../../shared/collab-client";
@@ -32,9 +35,7 @@ registerCreatorTheme(SurveyThemes);
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
     public readonly creator: SurveyCreatorModel;
-    private readonly plugin: JournalPlugin;
-    private readonly presence: PresencePlugin;
-    private readonly bar: CollabBarPlugin;
+    private readonly collab: CollaborationPlugin;
     private readonly roomId: string | null;
     private connection?: ICollabConnection;
 
@@ -47,41 +48,35 @@ export class AppComponent implements AfterViewInit, OnDestroy {
             showTranslationTab: true,
             showJSONEditorTab: true
         });
-        this.plugin = new JournalPlugin(this.creator);
-        this.creator.addPlugin("journal", this.plugin);
-        // Captures focus/selection/cursor and renders remote peers; the transport
-        // only ships its opaque state (the server stamps name/color on it).
-        this.presence = new PresencePlugin(this.creator);
-        this.creator.addPlugin("presence", this.presence);
-        // The collaboration bar renders itself inside the creator root (above
-        // the tabs); participants flow in via the PresencePlugin. Host-specific
-        // bits — the lobby invite link and navigation — are plugin options.
+        // One plugin: the change journal, presence capture/rendering and the
+        // collaboration strip above the tabs. Host-specific bits — the lobby
+        // invite link and navigation — are options.
         const roomId = this.roomId ?? "";
-        this.bar = new CollabBarPlugin(this.creator, {
+        this.collab = new CollaborationPlugin(this.creator, {
             roomId,
             framework: "Angular",
             getInviteLink: () => `${location.origin}/?room=${encodeURIComponent(roomId)}`,
             onBack: () => { location.href = "/"; }
         });
-        this.creator.addPlugin("collabBar", this.bar);
+        this.creator.addPlugin("collaboration", this.collab);
     }
 
     ngAfterViewInit(): void {
         if (!this.roomId) return;
         this.connection = connectCollab({
             creator: this.creator,
-            plugin: this.plugin,
-            presence: this.presence,
+            collab: this.collab,
             roomId: this.roomId,
             name: getDisplayName(),
-            onStatus: (s) => this.bar.setStatus(s),
-            onHistoryChanged: (changes) => this.bar.setHistory(changes)
+            onStatus: (s) => this.collab.setStatus(s),
+            onHistoryChanged: (changes) => this.collab.setHistory(changes)
         });
     }
 
     ngOnDestroy(): void {
-        this.bar.dispose();
-        this.presence.dispose();
+        // One dispose now covers the journal too - it used to outlive the
+        // component, keeping its creator.onModified subscription alive.
+        this.collab.dispose();
         this.connection?.dispose();
     }
 }

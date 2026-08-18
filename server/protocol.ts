@@ -45,7 +45,7 @@ export interface IAppendMsg {
  * client → server: this client's FULL presence state (not a diff) — replaces
  * whatever the server stored for this client. Ephemeral: never enters the log.
  * Opaque to the server; the client-side shape is a creator-side convention
- * (survey-creator-core's PresencePlugin / IPresenceState). Full-state messages
+ * (survey-creator-core's CollaborationPlugin / IPresenceState). Full-state messages
  * make presence self-healing: any single message fully re-establishes the
  * participant. User identity is NOT in the state — the server stamps it onto
  * the relayed envelope (see IPresencePeerEntry).

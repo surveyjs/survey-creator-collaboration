@@ -86,7 +86,9 @@ test.describe("lobby", () => {
         expect(res.status()).toBe(201);
 
         await page.goto(`/react/?room=${roomId}`);
-        await page.getByRole("button", { name: "Copy invite link" }).click();
+        // The button is labelled by its caption; "Copy invite link" is its
+        // tooltip (survey-core actions expose no aria-label).
+        await page.getByRole("button", { name: "Invite" }).click();
         const copied = await page.evaluate(() => navigator.clipboard.readText());
         expect(copied).toBe(`${baseURL}/?room=${roomId}`);
 

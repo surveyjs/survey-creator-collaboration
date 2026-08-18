@@ -1,5 +1,5 @@
 /**
- * Framework-agnostic collaboration wiring: JournalPlugin + PresencePlugin ↔
+ * Framework-agnostic collaboration wiring: the creator's CollaborationPlugin ↔
  * WebSocket.
  *
  * This module has ZERO runtime imports on purpose. It is compiled
@@ -12,14 +12,12 @@
  *
  * Usage (identical in every client):
  *   const creator = new SurveyCreator(...);            // framework-specific
- *   const plugin = new JournalPlugin(creator);
- *   creator.addPlugin("journal", plugin);
- *   const presence = new PresencePlugin(creator);
- *   creator.addPlugin("presence", presence);
- *   const collab = connectCollab({ creator, plugin, presence, roomId });
+ *   const collab = new CollaborationPlugin(creator, { roomId });
+ *   creator.addPlugin("collaboration", collab);
+ *   const connection = connectCollab({ creator, collab, roomId });
  *
- * Presence responsibilities are split: the PresencePlugin determines the
- * state (focus/selection/cursor) and renders remote peers; this module only
+ * Presence responsibilities are split: the plugin determines the state
+ * (focus/selection/cursor) and renders remote peers; this module only
  * moves the opaque state over the wire (send-throttled) and routes the
  * server's user-stamped envelopes ({clientId, name, color, state}) into the
  * plugin's roster. Liveness is the server's job: its WS ping/pong keepalive
@@ -35,7 +33,7 @@ export interface IJournalEvent {
     remove(handler: (sender: unknown, options: { record: unknown }) => void): void;
 }
 
-/** Structural mirror of the JournalPlugin surface we use. */
+/** The journal half of the CollaborationPlugin surface we use. */
 export interface IJournalPluginLike {
     onRecordAdded: IJournalEvent;
     onRecordChanged: IJournalEvent;
@@ -60,7 +58,7 @@ export interface IPresenceEvent {
     remove(handler: (sender: unknown, options: unknown) => void): void;
 }
 
-/** Structural mirror of the PresencePlugin surface we use. */
+/** The presence half of the CollaborationPlugin surface we use. */
 export interface IPresencePluginLike {
     onStateChanged: IPresenceEvent;
     /** Fires on every roster mutation (setPeers/upsertPeer/removePeer/clearPeers). */
@@ -80,10 +78,15 @@ export interface ICreatorLike {
 
 export type CollabStatus = "connecting" | "connected" | "closed";
 
+/**
+ * The creator's CollaborationPlugin plays both roles: it owns the journal and
+ * the presence roster and exposes both surfaces directly.
+ */
+export type ICollabPluginLike = IJournalPluginLike & IPresencePluginLike;
+
 export interface ICollabOptions {
     creator: ICreatorLike;
-    plugin: IJournalPluginLike;
-    presence: IPresencePluginLike;
+    collab: ICollabPluginLike;
     roomId: string;
     /** Override the WS origin, e.g. "ws://localhost:8080". Default: same origin. */
     wsBase?: string;
@@ -99,7 +102,7 @@ export interface ICollabOptions {
      * The room's change history grew or a record was updated in place. Carries
      * every journal record the room has seen — the init log (history to date),
      * remote records, and this client's local edits — in arrival order. Backs
-     * the "Show Version History" view. Not derivable from `plugin.records`,
+     * the "Show Version History" view. Not derivable from `collab.records`,
      * which holds this client's LOCAL edits only (applied remote/init records
      * are suppressed from it via `recorder.isApplying`).
      */
@@ -114,7 +117,10 @@ export interface ICollabConnection {
 const PRESENCE_SEND_MS = 40;
 
 export function connectCollab(opts: ICollabOptions): ICollabConnection {
-    const { creator, plugin, presence, roomId } = opts;
+    const { creator, roomId } = opts;
+    // The two roles the one plugin plays, named apart for readability below.
+    const plugin: IJournalPluginLike = opts.collab;
+    const presence: IPresencePluginLike = opts.collab;
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     const base = opts.wsBase ?? `${proto}//${location.host}`;
     const name = opts.name ?? getDisplayName();

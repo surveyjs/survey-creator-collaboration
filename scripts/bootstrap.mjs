@@ -1,8 +1,8 @@
 // Makes a bare checkout runnable with `npm install && npm start`.
 //
 // This app needs ten survey packages that are NOT usable from the npm registry:
-// the published survey-creator-core does not contain JournalPlugin/PresencePlugin,
-// they exist only on the survey-creator `feature/journal-plugin` branch. And the
+// the published survey-creator-core does not contain CollaborationPlugin, it
+// exists only on the survey-creator `feature/journal-plugin` branch. And the
 // `file:` deps of lobby/ + clients/* point at sibling `build/` output dirs, which
 // are gitignored in both sibling repos — so a fresh checkout has nothing to link.
 //
@@ -190,15 +190,17 @@ function ensureSiblings() {
     }
 }
 
-// The clients import JournalPlugin/PresencePlugin from survey-creator-core (see
-// shared/collab-client.ts). A survey-creator checkout without them builds fine
+// The clients import CollaborationPlugin from survey-creator-core (see
+// shared/collab-client.ts). A survey-creator checkout without it builds fine
 // and then fails at bundle time with a confusing "no exported member" error.
+// The whole feature lives under plugins/collaboration - the journal, presence
+// and the strip are its subfolders, not separate plugins.
 function checkPlugins() {
-    const pluginsDir = path.join(PARENT, "survey-creator", "packages", "survey-creator-core", "src", "plugins");
-    const missing = ["journal", "presence"].filter((name) => !fs.existsSync(path.join(pluginsDir, name)));
+    const pluginsDir = path.join(PARENT, "survey-creator", "packages", "survey-creator-core", "src", "plugins", "collaboration");
+    const missing = ["journal", "presence", "bar"].filter((name) => !fs.existsSync(path.join(pluginsDir, name)));
     if (missing.length > 0) {
         fail(
-            `survey-creator is missing the ${missing.join(" and ")} plugin source (${pluginsDir})`,
+            `survey-creator is missing the ${missing.join(", ")} plugin source (${pluginsDir})`,
             "  Collaboration needs the `feature/journal-plugin` branch:\n" +
             `    git -C ${path.join(PARENT, "survey-creator")} checkout feature/journal-plugin\n` +
             "  Then re-run `npm run bootstrap`."
