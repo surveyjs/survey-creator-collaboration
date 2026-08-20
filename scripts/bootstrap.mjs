@@ -24,7 +24,7 @@ const FORCE = !!process.env.COLLAB_FORCE_REBUILD;
 
 const SIBLINGS = [
     { dir: "survey-library", url: "https://github.com/surveyjs/survey-library", branch: "master" },
-    { dir: "survey-creator", url: "https://github.com/surveyjs/survey-creator", branch: "feature/journal-plugin" }
+    { dir: "survey-creator", url: "https://github.com/surveyjs/survey-creator", branch: "master" }
 ];
 
 // Strict order: each package is a Junction symlink to the previous one's build/ output,
