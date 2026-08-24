@@ -1,0 +1,27 @@
+// `npm run typecheck:local`: resolve survey-* to the sibling build/ typings instead
+// of the npm copies, so a plugin API you are editing locally typechecks here too.
+// SURVEYJS_LIBV3 does not apply - tsconfig paths are static and cannot be computed.
+// Two candidates per subpath is deliberate: TS takes the .d.ts, a bundler the runtime
+// file. A child `paths` replaces the parent map wholesale, hence the repeated react pins.
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "survey-core": ["../../../survey-library/packages/survey-core/build"],
+            "survey-js-ui": ["../../../survey-library/packages/survey-js-ui/build"],
+            "survey-core/themes": [
+                "../../../survey-library/packages/survey-core/build/themes/index.d.ts",
+                "../../../survey-library/packages/survey-core/build/fesm/themes/index.mjs"
+            ],
+            "survey-core/i18n": ["../../../survey-library/packages/survey-core/build/fesm/i18n/index.mjs"],
+            "survey-creator-core": ["../../../survey-creator/packages/survey-creator-core/build"],
+            "survey-creator-core/collaboration": [
+                "../../../survey-creator/packages/survey-creator-core/build/collaboration/index.d.ts",
+                "../../../survey-creator/packages/survey-creator-core/build/fesm/collaboration.mjs"
+            ],
+            "survey-creator-core/i18n": ["../../../survey-creator/packages/survey-creator-core/build/fesm/i18n/index.mjs"],
+            "survey-creator-js": ["../../../survey-creator/packages/survey-creator-js/build"]
+        }
+    }
+}

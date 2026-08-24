@@ -5,8 +5,9 @@ export default defineConfig({
     base: "/",
     plugins: [react()],
     resolve: {
-        // file:-installed survey packages arrive via junctions; keep a single
-        // survey-core instance or its Serializer singleton breaks.
+        // Keep a single survey-core instance or its Serializer singleton breaks.
+        // Load-bearing in dev:local/build:local: the aliased sibling builds sit
+        // next to their own React 17 copy, which would otherwise get pulled in too.
         dedupe: ["survey-core", "react", "react-dom"]
     },
     server: {

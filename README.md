@@ -39,44 +39,24 @@ receiver: presence.upsertPeer(peer)      (the plugin renders the overlay itself)
   id → textarea for the initial survey JSON (the seed); an existing room id → join.
   Invite links (`/?room=<id>`) prefill the room field.
 - **`clients/*`** — four independent apps (each with its own `package.json`/lockfile; no
-  npm workspaces on purpose). Survey packages come from the sibling local builds via
-  `file:` deps (`../survey-library/...`, `../survey-creator/...`).
+  npm workspaces on purpose). The survey packages come from npm (`^3.0.1`) — including
+  `CollaborationPlugin`, which ships in `survey-creator-core/collaboration`.
+
+The presence plugin owns both sides of presence: capturing the local state (tab, selection,
+property-grid focus, cursor) and rendering remote peers; `collab-client.ts` only ships the opaque
+state and feeds server-stamped `{clientId, name, color, state}` envelopes back into it.
 
 ## Run
 
 Node **20.11+** required (Angular 18). From a bare checkout:
 
 ```bash
-npm install    # server deps, then bootstrap: clone/build the sibling survey repos
-               # and install lobby + the 4 clients (first run ~20-40 min, a few GB)
+npm install    # server deps, then lobby + the four clients (postinstall)
 npm start      # builds lobby + all 4 clients, then serves everything on :8080
 ```
 
-`npm install` runs [`scripts/bootstrap.mjs`](scripts/bootstrap.mjs) as `postinstall`. It is idempotent —
-every step is skipped when its output is already there, so a second `npm install` costs seconds.
-
-| Variable | Effect |
-|---|---|
-| `COLLAB_SKIP_BOOTSTRAP=1` | do nothing (CI, or `npm install <pkg>`) |
-| `COLLAB_FORCE_REBUILD=1` | ignore all skips and rebuild every survey package |
-
-What bootstrap does, and why it is needed at all: this app cannot take the survey packages from
-npm — the published `survey-creator-core` has no `CollaborationPlugin`, and the `file:`
-deps of `lobby/` + `clients/*` point at sibling **`build/` output** dirs, which are gitignored in
-both sibling repos. So it:
-
-1. clones the siblings next to this checkout if they are missing (an existing checkout is reused
-   as is and never fetched/checked out over):
-   - `../survey-library` — branch `V3`
-   - `../survey-creator` — branch `feature/journal-plugin` (this is where the plugins live)
-2. builds all 10 packages in dependency order — `survey-core` → `survey-{react,vue3,js,angular}-ui`
-   → `survey-creator-core` → `survey-creator-{react,vue,js,angular}` — producing
-   `../survey-{library,creator}/packages/*/build` at matching versions (currently `3.0.0-beta.8`);
-3. installs `lobby` + the four `clients/*` (same work as `npm run install:clients`, with skips).
-
-The presence plugin owns both sides of presence: capturing the local state (tab, selection,
-property-grid focus, cursor) and rendering remote peers; `collab-client.ts` only ships the opaque
-state and feeds server-stamped `{clientId, name, color, state}` envelopes back into it.
+`npm install` runs `install:clients` as `postinstall`, so a fresh clone needs nothing else
+— every survey package, `CollaborationPlugin` included, comes from npm.
 
 Open http://localhost:8080, create a room, open the same room in another tab/browser
 (any framework) — edits sync live.
@@ -87,6 +67,49 @@ Dev loop for one client (Vite/ng dev server with /api and /ws proxy to :8080):
 npm run server            # terminal 1: relay + lobby + built clients
 npm run dev:react         # terminal 2: lobby | react | vue | js | angular
 ```
+
+## Developing against local survey builds
+
+To work on the collaboration plugin itself, every app has a `:local` variant that resolves
+`survey-*` to the sibling `../survey-library` and `../survey-creator` **`build/`** dirs
+instead of the npm copies:
+
+```bash
+npm run dev:react:local     # or build:react:local, build:clients:local
+npm run dev:react:watch     # same, plus `watch:dev` in the survey packages via concurrently
+npm run typecheck:local     # inside an app: typecheck against the local .d.ts
+```
+
+Build the packages in the sibling checkouts first (`npm run build:all` for `survey-core`
+and `survey-creator-core`, `npm run build` for the rest). All ten must be built **at the
+same version** — a mismatched or partial set throws with the list of offenders rather than
+silently mixing local and npm copies of the same library. Set `SURVEYJS_LIBV3` in the root
+`.env` if the checkouts do not live next to this repo.
+
+The aliases are derived from each package's `exports` map
+([`scripts/local-survey-alias.mjs`](scripts/local-survey-alias.mjs)) rather than pointing at
+the `build/` dir as a whole: a plain directory alias bypasses `exports`, so subpaths like
+`survey-core/themes` and `survey-creator-core/collaboration` would land on the CJS bundles,
+which pull in a second copy of the library (two `Serializer` singletons). The sibling repo
+`theme-adapter-demos` uses the same alias approach for the same reason, and can get away
+with plain directory aliases only because it imports no JS subpaths.
+
+The Angular client goes through `--configuration local` and
+[`clients/angular/tsconfig.local.json`](clients/angular/tsconfig.local.json) instead — the
+esbuild builder honours tsconfig `paths` for both type checking and bundling. Static paths
+cannot run the check above, so an npm pre-hook
+([`scripts/check-local-survey.mjs`](scripts/check-local-survey.mjs)) does it instead; the
+same hook guards `typecheck:local`. That table is hand-kept, so a newly imported subpath
+falls back to the npm copy until it is added. To confirm which copy you actually got, check
+the version marker in the bundle:
+
+```bash
+grep -ohE '"3\.[0-9]+\.[0-9]+"' clients/react/dist/assets/*.js | sort -u
+```
+
+`survey-angular-ui` and `survey-creator-angular` ship no watch script (ng-packagr), so
+`dev:angular:watch` only watches `survey-core` and `survey-creator-core`; rebuild those two
+by hand after editing them.
 
 ## Tests
 
@@ -100,8 +123,9 @@ The suite covers the lobby flows (random room, seed form, invalid JSON, existing
 two-tab live sync for each of the four frameworks, one room open in all four frameworks
 at once, late-joiner bootstrap (seed + log replay), room isolation, and WS auto-creation.
 
-Protocol-level unit coverage lives with the plugin itself
-(`../survey-creator/packages/survey-creator-core/tests/journal*.tests.ts`).
+Protocol-level unit coverage lives with the plugin itself, upstream in the
+`survey-creator` repo (`packages/survey-creator-core/tests/journal*.tests.ts`) — a local
+checkout of it is not part of this project's setup.
 
 ## Environment
 
@@ -111,6 +135,7 @@ Protocol-level unit coverage lives with the plugin itself
 | `HOST` | `localhost` | Bind address |
 | `EMPTY_ROOM_TTL_MS` | `1800000` (30 min) | How long an empty room lives before GC |
 | `SURVEYJS_LICENSE_KEY` | — | SurveyJS Creator license key, baked into the client bundles **at build time** (`npm run build:clients` / `npm start`). Set it either in a `.env` file at the repo root (copy `.env.example`; gitignored) or via docker compose `environment:` — a real environment variable wins over `.env`. Vite clients read `.env` through `envDir`/`envPrefix`, the Angular client through `scripts/gen-license-key.mjs` (npm pre-hook). |
+| `SURVEYJS_LIBV3` | — | Only for the `:local` scripts: where the `survey-library` and `survey-creator` checkouts live, if not right next to this repo. Absolute, or relative to the repo root. Same variable as in `theme-adapter-demos`. Has no effect on the Angular client, whose `tsconfig.local.json` paths are static. |
 
 ## Notes & caveats
 
@@ -119,6 +144,8 @@ Protocol-level unit coverage lives with the plugin itself
   is last-write-wins. Do not deduplicate by `payload.seq` — it is per-client.
 - Room state is memory-only by design; a server restart loses rooms (see `PROTOCOL.md`
   for what a persistent port would need to keep).
-- The Angular build needs `preserveSymlinks: true` (set in `angular.json`): the survey
-  `file:` deps are symlinks into repos that carry their own old `@angular/*` copies, and
-  resolving through real paths would bundle two Angular runtimes.
+- `resolve.dedupe` in the Vite configs is load-bearing, not cosmetic: survey-core's
+  `Serializer` is a singleton, and in `:local` mode the aliased sibling builds sit next to
+  their own React 17 / Vue copies that would otherwise be pulled in alongside the app's.
+- The clients enable `showJSONEditorTab`, but `ace-builds` (an optional peer of
+  `survey-creator-core`) is not installed, so the JSON tab uses the plain textarea editor.

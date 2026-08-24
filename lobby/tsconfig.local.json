@@ -1,0 +1,16 @@
+// `npm run typecheck:local`: resolve survey-* to the sibling build/ typings instead
+// of the npm copies, so a plugin API you are editing locally typechecks here too.
+// SURVEYJS_LIBV3 does not apply - tsconfig paths are static and cannot be computed.
+// A child `paths` replaces the parent map wholesale, hence the repeated react pins.
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "react": ["./node_modules/@types/react"],
+            "react-dom": ["./node_modules/@types/react-dom"],
+            "survey-core": ["../../survey-library/packages/survey-core/build"],
+            "survey-react-ui": ["../../survey-library/packages/survey-react-ui/build"]
+        }
+    }
+}

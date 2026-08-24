@@ -7,7 +7,11 @@
         "start": "ng serve --proxy-config proxy.conf.json",
         "prebuild": "node scripts/gen-license-key.mjs",
         "build": "ng build",
-        "typecheck": "ng build --configuration development --no-progress"
+        "typecheck": "ng build --configuration development --no-progress",
+        "prestart:local": "node ../../scripts/check-local-survey.mjs && node scripts/gen-license-key.mjs",
+        "start:local": "ng serve --configuration local --proxy-config proxy.conf.json",
+        "prebuild:local": "node ../../scripts/check-local-survey.mjs && node scripts/gen-license-key.mjs",
+        "build:local": "ng build --configuration local"
     },
     "dependencies": {
         "@angular/animations": "^18.2.0",
@@ -21,10 +25,10 @@
         "rxjs": "~7.8.0",
         "tslib": "^2.6.0",
         "zone.js": "~0.14.10",
-        "survey-core": "../../../survey-library/packages/survey-core/build",
-        "survey-angular-ui": "../../../survey-library/packages/survey-angular-ui/build",
-        "survey-creator-core": "../../../survey-creator/packages/survey-creator-core/build",
-        "survey-creator-angular": "../../../survey-creator/packages/survey-creator-angular/build"
+        "survey-core": "^3.0.1",
+        "survey-angular-ui": "^3.0.1",
+        "survey-creator-core": "^3.0.1",
+        "survey-creator-angular": "^3.0.1"
     },
     "devDependencies": {
         "@angular-devkit/build-angular": "^18.2.0",

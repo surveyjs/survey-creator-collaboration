@@ -6,14 +6,18 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "typecheck": "vue-tsc --noEmit"
+        "typecheck": "vue-tsc --noEmit",
+        "dev:local": "vite --config vite.config.local.ts",
+        "build:local": "vite build --config vite.config.local.ts",
+        "pretypecheck:local": "node ../../scripts/check-local-survey.mjs",
+        "typecheck:local": "vue-tsc -p tsconfig.local.json --noEmit"
     },
     "dependencies": {
         "vue": "^3.4.19",
-        "survey-core": "../../../survey-library/packages/survey-core/build",
-        "survey-vue3-ui": "../../../survey-library/packages/survey-vue3-ui/build",
-        "survey-creator-core": "../../../survey-creator/packages/survey-creator-core/build",
-        "survey-creator-vue": "../../../survey-creator/packages/survey-creator-vue/build"
+        "survey-core": "^3.0.1",
+        "survey-vue3-ui": "^3.0.1",
+        "survey-creator-core": "^3.0.1",
+        "survey-creator-vue": "^3.0.1"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.0.4",

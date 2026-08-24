@@ -1,0 +1,33 @@
+// `ng build/serve --configuration local`: resolve survey-* to the sibling build/
+// dirs instead of the npm copies, for working on the collaboration plugin itself.
+//
+// The Angular 18 esbuild builder honours these paths for both type checking and
+// bundling, which is why every subpath lists TWO candidates: TS picks the .d.ts,
+// esbuild the runtime file. With one candidate the build fails with TS7016.
+//
+// Unlike the vite apps (scripts/local-survey-alias.mjs derives the full table from
+// each package's `exports` map) this list is hand-kept: a newly imported subpath
+// silently falls back to the npm copy until it is added here. The version-marker
+// check in README's local-mode section is what catches that.
+{
+    "extends": "./tsconfig.app.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "survey-core": ["../../../survey-library/packages/survey-core/build"],
+            "survey-core/themes": [
+                "../../../survey-library/packages/survey-core/build/themes/index.d.ts",
+                "../../../survey-library/packages/survey-core/build/fesm/themes/index.mjs"
+            ],
+            "survey-core/i18n": ["../../../survey-library/packages/survey-core/build/fesm/i18n/index.mjs"],
+            "survey-angular-ui": ["../../../survey-library/packages/survey-angular-ui/build"],
+            "survey-creator-core": ["../../../survey-creator/packages/survey-creator-core/build"],
+            "survey-creator-core/collaboration": [
+                "../../../survey-creator/packages/survey-creator-core/build/collaboration/index.d.ts",
+                "../../../survey-creator/packages/survey-creator-core/build/fesm/collaboration.mjs"
+            ],
+            "survey-creator-core/i18n": ["../../../survey-creator/packages/survey-creator-core/build/fesm/i18n/index.mjs"],
+            "survey-creator-angular": ["../../../survey-creator/packages/survey-creator-angular/build"]
+        }
+    }
+}

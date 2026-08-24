@@ -12,8 +12,9 @@
         "forceConsistentCasingInFileNames": true,
         "baseUrl": ".",
         "paths": {
-            // The file:-linked survey-react-ui carries its own @types/react copy;
-            // pin every react type reference to this app's single copy.
+            // survey-react-ui declares @types/react as a peer, and in the :local mode
+            // the sibling build sits next to its own copy; pin every react type
+            // reference to this app's single one.
             "react": ["./node_modules/@types/react"],
             "react-dom": ["./node_modules/@types/react-dom"]
         }
